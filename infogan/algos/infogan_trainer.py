@@ -48,12 +48,18 @@ class InfoGANTrainer(object):
         self.input_tensor = input_tensor = tf.placeholder(tf.float32, [self.batch_size, self.dataset.image_dim])
 
         with pt.defaults_scope(phase=pt.Phase.train):
-            z_var = self.model.latent_dist.sample_prior(self.batch_size)
-            self.fake_x, _ = self.model.generate(z_var)
+            self.sampled_z_var = self.model.latent_dist.sample_prior(self.batch_size)
+            self.z_input = tf.placeholder(tf.float32, self.sampled_z_var.get_shape(), name='latent_code_input')
+            self.use_manual_z_input = tf.placeholder(tf.float32, (), name='manual_z_switch')
+
+            # Sort of a hack to use the placeholder z variable if use_manual_z_input==1 and the sampled z otherwise.
+            # Note: This preserves the default behavior unless `use_manual_z_input` is passed as 1 in sess.run().
+            self.z_var = (1-self.use_manual_z_input)*self.sampled_z_var + self.use_manual_z_input*self.z_input
+            self.fake_x, _ = self.model.generate(self.z_var)
             real_d, _, _, _ = self.model.discriminate(input_tensor)
             fake_d, _, fake_reg_z_dist_info, _ = self.model.discriminate(self.fake_x)
 
-            reg_z = self.model.reg_z(z_var)
+            reg_z = self.model.reg_z(self.z_var)
 
             discriminator_loss = - tf.reduce_mean(tf.log(real_d + TINY) + tf.log(1. - fake_d + TINY))
             generator_loss = - tf.reduce_mean(tf.log(fake_d + TINY))
@@ -236,7 +242,7 @@ class InfoGANTrainer(object):
                 for i in range(self.updates_per_epoch):
                     pbar.update(i)
                     x, _ = self.dataset.train.next_batch(self.batch_size)
-                    feed_dict = {self.input_tensor: x}
+                    feed_dict = {self.input_tensor: x, self.use_manual_z_input:0, self.z_input:np.zeros(self.z_input.get_shape())}
                     log_vals = sess.run([self.discriminator_trainer] + log_vars, feed_dict)[1:]
                     sess.run(self.generator_trainer, feed_dict)
                     all_log_vals.append(log_vals)
@@ -249,7 +255,8 @@ class InfoGANTrainer(object):
 
                 x, _ = self.dataset.train.next_batch(self.batch_size)
 
-                summary_str = sess.run(summary_op, {self.input_tensor: x})
+                feed_dict = {self.input_tensor: x, self.use_manual_z_input:0, self.z_input:np.zeros(self.z_input.get_shape())}
+                summary_str = sess.run(summary_op, feed_dict)
                 summary_writer.add_summary(summary_str, counter)
 
                 avg_log_vals = np.mean(np.array(all_log_vals), axis=0)

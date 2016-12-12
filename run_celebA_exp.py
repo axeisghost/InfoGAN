@@ -9,6 +9,11 @@
 
 # In[1]:
 
+get_ipython().magic(u'pylab inline')
+
+
+# In[2]:
+
 from __future__ import print_function
 from __future__ import absolute_import
 from infogan.misc.distributions import Uniform, Categorical, Gaussian, MeanBernoulli
@@ -25,10 +30,9 @@ import os
 
 import numpy as np
 
-
-# In[2]:
-
-#%matplotlib inline
+from matplotlib import pyplot as plt
+from display_utils import display_images
+import display_utils
 
 
 # In[3]:
@@ -36,12 +40,12 @@ import numpy as np
 root_log_dir = "logs/celebA"
 root_checkpoint_dir = "ckt/celebA"
 batch_size = 128
-updates_per_epoch = 100    # How often to run the logging.
+updates_per_epoch = 2    # How often to run the logging.
 checkpoint_snapshot_interval = 1000  # Save a snapshot of the model every __ updates.
-max_epoch = 50
+max_epoch = 1
 
 
-# In[ ]:
+# In[4]:
 
 # The "C.3 CelebA" input settings:
 # "For this task, we use 10 ten-dimensional categorical code and 128 noise variables, resulting in a concatenated dimension of 228.."
@@ -63,7 +67,7 @@ c3_celebA_image_size = 32
 
 # In[5]:
 
-dataset = CelebADataset()  # The full dataset is enormous (202,599 frames).
+dataset = CelebADataset(250)  # The full dataset is enormous (202,599 frames).
 
 print("Loaded {} images into Dataset.".format(len(dataset.raw_images)))
 print("Split {} images into training set.".format(len(dataset.train.images)))
@@ -71,6 +75,12 @@ print("Image shape: ",dataset.image_shape)
 
 
 # In[6]:
+
+print("Displaying some training Images...\n Click to play!")
+display_images([frame.reshape(dataset.image_shape) for frame in dataset.train.images[:30]])
+
+
+# In[7]:
 
 model = RegularizedGAN(
     output_dist=MeanBernoulli(dataset.image_dim),
@@ -82,7 +92,7 @@ model = RegularizedGAN(
 )
 
 
-# In[7]:
+# In[8]:
 
 now = datetime.datetime.now(dateutil.tz.tzlocal())
 timestamp = now.strftime('%Y_%m_%d_%H_%M_%S')
@@ -110,12 +120,12 @@ algo = InfoGANTrainer(
 )
 
 
-# In[8]:
+# In[9]:
 
 #algo.visualize_all_factors()  # ... what does this do?
 
 
-# In[9]:
+# In[10]:
 
 sess = tf.Session()
 
@@ -125,22 +135,6 @@ algo.train(sess=sess)
 # In[ ]:
 
 
-
-
-# In[16]:
-
-def play_frames_clip(frames):
-    ''' frames -- a list/array of np.array images. Plays all frames in the notebook as a clip.'''
-    from matplotlib import pyplot as plt
-    from IPython import display
-
-    for frame in frames:
-        plt.imshow(frame)
-        display.display(plt.gcf())
-        display.clear_output(wait=True)
-
-print("Displaying some training Images...")
-play_frames_clip([frame.reshape(dataset.image_shape) for frame in dataset.train.images[10:20]])
 
 
 # In[ ]:
@@ -154,16 +148,54 @@ play_frames_clip([frame.reshape(dataset.image_shape) for frame in dataset.train.
 # 
 # We can just reuse the tiny piece of the TensorFlow graph that generates fake samples, $x$, from the learned distribution. We'll reuse the same `sess` variable that we used for training, so that all the variables still hold their learned values!
 
-# In[43]:
+# In[11]:
 
-generated_images = sess.run(algo.fake_x)
-generated_images.shape
+def make_one_hot(length, value):
+    v = np.zeros(length)
+    v[value] = 1
+    return v
+def make_z(latent_spec, vals, noise = None):
+    ''' noise - if specified will use provided noise, otherwise will generate noise from noise_dim. '''
+    if noise is None:
+        noise = np.random.rand(latent_spec[0][0].dim)
+    
+    codes = [make_one_hot(10, v) if isinstance(latent_spec[i+1][0],Categorical) else [v] for i,v in enumerate(vals)]
+    return np.concatenate([noise]+codes)
 
 
-# In[61]:
+# In[12]:
 
-print("Displaying a batch of GENERATED Images...")
-play_frames_clip([frame.reshape(dataset.image_shape) for frame in generated_images])
+def generate_images_for_codes(latent_spec, codes, noise = None):
+    ''' codes = 10 values 0-10 which represent the GAN codes (z). '''
+    # Unfortunately, for now, I have to generate batch_size images at a time still.
+    custom_z = np.asarray([make_z(latent_spec, codes, noise) for _ in range(batch_size)])
+    return sess.run(algo.fake_x, feed_dict={algo.use_manual_z_input:1, algo.z_input: custom_z})
+
+
+# In[13]:
+
+from ipywidgets import interact, interactive, fixed
+c=(0,10,1)
+@interact(z0=c,z1=c,z2=c,z3=c,z4=c,z5=c,z6=c,z7=c,z8=c,z9=c, num_images=(1,50,1), __manual=True)
+def images_from_codes(z0,z1,z2,z3,z4,z5,z6,z7,z8,z9, num_images=10):
+    images = generate_images_for_codes(c3_celebA_latent_spec, [z0,z1,z2,z3,z4,z5,z6,z7,z8,z9][:len(c3_celebA_latent_spec)-1])
+    print("Displaying sampled images as movie. Click to play.")
+    return display_images([frame.reshape(dataset.image_shape) for frame in images[:num_images,:]])
+
+
+# In[ ]:
+
+
+
+
+# In[ ]:
+
+
+
+
+# In[ ]:
+
+
 
 
 # In[ ]:
