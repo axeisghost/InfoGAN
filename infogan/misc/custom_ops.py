@@ -10,7 +10,7 @@ class conv_batch_norm(pt.VarStoreMethod):
     """Code modification of http://stackoverflow.com/a/33950177"""
 
     def __call__(self, input_layer, epsilon=1e-5, momentum=0.1, name="batch_norm",
-                 in_dim=None, phase=Phase.train):
+                 in_dim=None, phase=Phase.train, scale_after_normalization=True):
         shape = input_layer.shape
         shp = in_dim or shape[-1]
         with tf.variable_scope(name) as scope:
@@ -39,11 +39,11 @@ class conv_batch_norm(pt.VarStoreMethod):
                 with tf.control_dependencies([update_moving_mean, update_moving_variance]):
                     normalized_x = tf.nn.batch_norm_with_global_normalization(
                         input_layer.tensor, self.mean, self.variance, self.beta, self.gamma, epsilon,
-                        scale_after_normalization=True)
+                        scale_after_normalization=scale_after_normalization)
             else:
                 normalized_x = tf.nn.batch_norm_with_global_normalization(
                     input_layer.tensor, self.moving_mean, self.moving_variance, self.beta, self.gamma, epsilon,
-                    scale_after_normalization=True)
+                    scale_after_normalization=scale_after_normalization)
             return input_layer.with_tensor(normalized_x, parameters=self.vars)
 
 
