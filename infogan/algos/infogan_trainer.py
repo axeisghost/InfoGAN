@@ -186,7 +186,7 @@ class InfoGANTrainer(object):
                 raise NotImplementedError
             z_var = tf.constant(np.concatenate([fixed_noncat, cur_cat], axis=1))
 
-            _, x_dist_info = self.model.generate(z_var)
+            _, x_dist_info = self.model.generate(z_var, phase=pt.Phase.test)
 
             # just take the mean image
             if isinstance(self.model.output_dist, Bernoulli):
