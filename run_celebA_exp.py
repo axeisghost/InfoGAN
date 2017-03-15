@@ -7,12 +7,12 @@
 # 
 # My relevant additions to this repository (which contains the code published by the authors) are adding the "celebA" model to [infogan/models/regularized_gan.py](infogan/models/regularized_gan.py) and some small adjustments to [infogan/algos/infogan_trainer.py](infogan/algos/infogan_trainer.py) to allow for generating samples after training.
 
-# In[1]:
+# In[14]:
 
 # get_ipython().magic(u'pylab inline')
 
 
-# In[2]:
+# In[15]:
 
 from __future__ import print_function
 from __future__ import absolute_import
@@ -35,17 +35,17 @@ from display_utils import display_images
 import display_utils
 
 
-# In[3]:
+# In[16]:
 
 root_log_dir = "logs/celebA"
 root_checkpoint_dir = "ckt/celebA"
 batch_size = 128
-updates_per_epoch = 1    # How often to run the logging.
+updates_per_epoch = 5    # How often to run the logging.
 checkpoint_snapshot_interval = 1000  # Save a snapshot of the model every __ updates.
-max_epoch = 1
+max_epoch = 15
 
 
-# In[4]:
+# In[17]:
 
 # The "C.3 CelebA" input settings:
 # "For this task, we use 10 ten-dimensional categorical code and 128 noise variables, resulting in a concatenated dimension of 228.."
@@ -65,9 +65,9 @@ c3_celebA_latent_spec = [
 c3_celebA_image_size = 32
 
 
-# In[5]:
+# In[18]:
 
-dataset = CelebADataset(250)  # The full dataset is enormous (202,599 frames).
+dataset = CelebADataset(202599)  # The full dataset is enormous (202,599 frames).
 
 print("Loaded {} images into Dataset.".format(len(dataset.raw_images)))
 print("Split {} images into training set.".format(len(dataset.train.images)))
@@ -80,7 +80,7 @@ print("Image shape: ",dataset.image_shape)
 # display_images([frame.reshape(dataset.image_shape) for frame in dataset.train.images[:30]])
 
 
-# In[6]:
+# In[10]:
 
 model = RegularizedGAN(
     output_dist=MeanBernoulli(dataset.image_dim),
@@ -92,7 +92,7 @@ model = RegularizedGAN(
 )
 
 
-# In[7]:
+# In[11]:
 
 now = datetime.datetime.now(dateutil.tz.tzlocal())
 timestamp = now.strftime('%Y_%m_%d_%H_%M_%S')
@@ -120,12 +120,12 @@ algo = InfoGANTrainer(
 )
 
 
-# In[8]:
+# In[12]:
 
 #algo.visualize_all_factors()  # ... what does this do?
 
 
-# In[9]:
+# In[13]:
 
 sess = tf.Session()
 
@@ -183,9 +183,9 @@ def generate_images_for_codes(latent_spec, codes, noise = None):
 #     return display_images([frame.reshape(dataset.image_shape) for frame in images[:num_images,:]])
 
 
-# In[12]:
+# In[ ]:
 
-# tensorboard --logdir /logs/celebA/celebA_model_celebA_codes_color_img-align-celeba_10_2017_03_15_02_20_02 
+# get_ipython().system(u'tensorboard --logdir /logs/celebA/celebA_model_celebA_codes_color_img-align-celeba_10_2017_03_15_02_20_02 ')
 
 
 # In[ ]:
