@@ -9,7 +9,7 @@
 
 # In[1]:
 
-get_ipython().magic(u'pylab inline')
+# get_ipython().magic(u'pylab inline')
 
 
 # In[2]:
@@ -40,7 +40,7 @@ import display_utils
 root_log_dir = "logs/celebA"
 root_checkpoint_dir = "ckt/celebA"
 batch_size = 128
-updates_per_epoch = 2    # How often to run the logging.
+updates_per_epoch = 1    # How often to run the logging.
 checkpoint_snapshot_interval = 1000  # Save a snapshot of the model every __ updates.
 max_epoch = 1
 
@@ -76,11 +76,11 @@ print("Image shape: ",dataset.image_shape)
 
 # In[6]:
 
-print("Displaying some training Images...\n Click to play!")
-display_images([frame.reshape(dataset.image_shape) for frame in dataset.train.images[:30]])
+# print("Displaying some training Images...\n Click to play!")
+# display_images([frame.reshape(dataset.image_shape) for frame in dataset.train.images[:30]])
 
 
-# In[7]:
+# In[6]:
 
 model = RegularizedGAN(
     output_dist=MeanBernoulli(dataset.image_dim),
@@ -92,7 +92,7 @@ model = RegularizedGAN(
 )
 
 
-# In[8]:
+# In[7]:
 
 now = datetime.datetime.now(dateutil.tz.tzlocal())
 timestamp = now.strftime('%Y_%m_%d_%H_%M_%S')
@@ -120,12 +120,12 @@ algo = InfoGANTrainer(
 )
 
 
-# In[9]:
+# In[8]:
 
 #algo.visualize_all_factors()  # ... what does this do?
 
 
-# In[10]:
+# In[9]:
 
 sess = tf.Session()
 
@@ -148,7 +148,7 @@ algo.train(sess=sess)
 # 
 # We can just reuse the tiny piece of the TensorFlow graph that generates fake samples, $x$, from the learned distribution. We'll reuse the same `sess` variable that we used for training, so that all the variables still hold their learned values!
 
-# In[11]:
+# In[10]:
 
 def make_one_hot(length, value):
     v = np.zeros(length)
@@ -163,7 +163,7 @@ def make_z(latent_spec, vals, noise = None):
     return np.concatenate([noise]+codes)
 
 
-# In[12]:
+# In[11]:
 
 def generate_images_for_codes(latent_spec, codes, noise = None):
     ''' codes = 10 values 0-10 which represent the GAN codes (z). '''
@@ -174,18 +174,18 @@ def generate_images_for_codes(latent_spec, codes, noise = None):
 
 # In[13]:
 
-from ipywidgets import interact, interactive, fixed
-c=(0,10,1)
-@interact(z0=c,z1=c,z2=c,z3=c,z4=c,z5=c,z6=c,z7=c,z8=c,z9=c, num_images=(1,50,1), __manual=True)
-def images_from_codes(z0,z1,z2,z3,z4,z5,z6,z7,z8,z9, num_images=10):
-    images = generate_images_for_codes(c3_celebA_latent_spec, [z0,z1,z2,z3,z4,z5,z6,z7,z8,z9][:len(c3_celebA_latent_spec)-1])
-    print("Displaying sampled images as movie. Click to play.")
-    return display_images([frame.reshape(dataset.image_shape) for frame in images[:num_images,:]])
+# from ipywidgets import interact, interactive, fixed
+# c=(0,10,1)
+# @interact(z0=c,z1=c,z2=c,z3=c,z4=c,z5=c,z6=c,z7=c,z8=c,z9=c, num_images=(1,50,1), __manual=True)
+# def images_from_codes(z0,z1,z2,z3,z4,z5,z6,z7,z8,z9, num_images=10):
+#     images = generate_images_for_codes(c3_celebA_latent_spec, [z0,z1,z2,z3,z4,z5,z6,z7,z8,z9][:len(c3_celebA_latent_spec)-1])
+#     print("Displaying sampled images as movie. Click to play.")
+#     return display_images([frame.reshape(dataset.image_shape) for frame in images[:num_images,:]])
 
 
-# In[ ]:
+# In[12]:
 
-
+# tensorboard --logdir /logs/celebA/celebA_model_celebA_codes_color_img-align-celeba_10_2017_03_15_02_20_02 
 
 
 # In[ ]:
