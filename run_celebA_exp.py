@@ -40,9 +40,9 @@ import display_utils
 root_log_dir = "logs/celebA"
 root_checkpoint_dir = "ckt/celebA"
 batch_size = 128
-updates_per_epoch = 5    # How often to run the logging.
+updates_per_epoch = 100    # How often to run the logging.
 checkpoint_snapshot_interval = 1000  # Save a snapshot of the model every __ updates.
-max_epoch = 15
+max_epoch = 30
 
 
 # In[17]:
